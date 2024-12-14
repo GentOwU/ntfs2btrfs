@@ -1,16 +1,24 @@
 name: build x86_64-pc-linux-gnu
-on: [push]
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on tag pushes (for version releases)
+
 jobs:
   x86_64-pc-linux-gnu:
-    runs-on: ubuntu-rolling
+    runs-on: ubuntu-latest
+
     steps:
-      - run: apt-get update
-      - run: apt-get install -y g++ git cmake nodejs pkg-config libfmt-dev liblzo2-dev libzstd-dev zlib1g-dev
+      - run: sudo apt update
+      - run: sudo apt install -y g++ git cmake nodejs pkg-config libfmt-dev liblzo2-dev libzstd-dev zlib1g-dev
       - run: echo "SHORT_SHA=`echo ${{ github.sha }} | cut -c1-8`" >> $GITHUB_ENV
       - run: git clone ${{ github.server_url }}/${{ github.repository }} ${SHORT_SHA}
       - run: cd ${SHORT_SHA} && git checkout ${{ github.sha }}
       - run: mkdir -p debug-work
       - run: mkdir -p release-work
+
+      # Build Debug version
       - run: |
           cmake -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_INSTALL_PREFIX=${PWD}/install/debug \
@@ -19,6 +27,8 @@ jobs:
             -S ${SHORT_SHA} -B debug-work && \
           cmake --build debug-work --parallel `nproc` && \
           cmake --install debug-work
+
+      # Build Release version
       - run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=${PWD}/install \
@@ -26,9 +36,32 @@ jobs:
             -S ${SHORT_SHA} -B release-work && \
           cmake --build release-work --parallel `nproc` && \
           cmake --install release-work
+
+      # Upload build artifacts (for later use or debugging)
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ github.sha }}
           overwrite: true
-          path: |
-            install
+          path: install
+
+      # Create a GitHub release (if a tag is pushed)
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}  # Use the tag name from the push event
+          release_name: Release ${{ github.ref }}
+          body: 'Release for commit ${{ github.sha }}'
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload release assets to the GitHub release
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./install/*   # Path to the build artifacts (e.g., executables, libs, etc.)
+          asset_name: "build-artifacts-${{ github.sha }}.tar.gz"  # Name for the uploaded file
+          asset_content_type: application/gzip
