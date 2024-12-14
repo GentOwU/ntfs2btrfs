@@ -39,25 +39,3 @@ jobs:
           name: ${{ github.sha }}
           overwrite: true
           path: install
-
-      # Create a GitHub release (if a tag is pushed)
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref }}  # Use the tag name from the push event
-          release_name: Release ${{ github.ref }}
-          body: 'Release for commit ${{ github.sha }}'
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-      # Upload release assets to the GitHub release
-      - name: Upload release assets
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./install/*   # Path to the build artifacts (e.g., executables, libs, etc.)
-          asset_name: "build-artifacts-${{ github.sha }}.tar.gz"  # Name for the uploaded file
-          asset_content_type: application/gzip
