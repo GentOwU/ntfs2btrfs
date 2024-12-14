@@ -56,7 +56,7 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  
       # Upload release assets to the GitHub release
       - name: Upload release assets
         uses: actions/upload-release-asset@v1
