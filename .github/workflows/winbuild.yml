@@ -34,14 +34,14 @@ jobs:
         run: |
           mkdir debug-work
           cd debug-work
-          cmake -G "Visual Studio 16 2019" ^
-              -DCMAKE_BUILD_TYPE=Debug ^
-              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install\debug ^
-              -DCMAKE_INSTALL_INCLUDEDIR=../include ^
-              -DWITH_OPENSSL=ON ^
-              -DENABLE_KRB5=ON ^
-              -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && \
-          cmake --build . --config Debug --parallel 4 && \
+          cmake -G "Visual Studio 16 2019" `
+              -DCMAKE_BUILD_TYPE=Debug `
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install\debug `
+              -DCMAKE_INSTALL_INCLUDEDIR=../include `
+              -DWITH_OPENSSL=ON `
+              -DENABLE_KRB5=ON `
+              -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && `
+          cmake --build . --config Debug --parallel 4 && `
           cmake --install . --config Debug
 
       # Build Release version
@@ -49,13 +49,13 @@ jobs:
         run: |
           mkdir release-work
           cd release-work
-          cmake -G "Visual Studio 16 2019" ^
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
-            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install ^
-            -DWITH_OPENSSL=ON ^
-            -DENABLE_KRB5=ON ^
-            -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && \
-          cmake --build . --config Release --parallel 4 && \
+          cmake -G "Visual Studio 16 2019" `
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install `
+            -DWITH_OPENSSL=ON `
+            -DENABLE_KRB5=ON `
+            -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && `
+          cmake --build . --config Release --parallel 4 && `
           cmake --install . --config Release
 
       # Upload Debug artifacts
