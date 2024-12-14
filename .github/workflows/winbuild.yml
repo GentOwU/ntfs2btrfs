@@ -1,0 +1,68 @@
+name: Build x86_64-pc-windows-msvc
+
+on: [push]
+
+jobs:
+  x86_64-pc-windows-msvc:
+    runs-on: windows-latest
+
+    steps:
+      # Install necessary dependencies
+      - name: Install dependencies using Chocolatey
+        run: |
+          choco install -y cmake visualstudio2019community visualstudio2019-workload-desktopdevelopment
+          choco install -y git
+
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Set environment variables
+      - name: Set Short SHA Environment Variable
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
+      - name: Clone the repository
+        run: git clone ${{ github.server_url }}/${{ github.repository }} ${SHORT_SHA}
+
+      - name: Checkout to specific commit
+        run: git checkout ${{ github.sha }}
+
+      # Build Debug version
+      - name: Build Debug version
+        run: |
+          mkdir debug-work
+          cd debug-work
+          cmake -G "Visual Studio 16 2019" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install\debug \
+            -DCMAKE_INSTALL_INCLUDEDIR=../include \
+            -DWITH_OPENSSL=ON -DENABLE_KRB5=ON \
+            -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && \
+          cmake --build . --config Debug --parallel $(nproc) && \
+          cmake --install . --config Debug
+
+      # Build Release version
+      - name: Build Release version
+        run: |
+          mkdir release-work
+          cd release-work
+          cmake -G "Visual Studio 16 2019" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install \
+            -DWITH_OPENSSL=ON -DENABLE_KRB5=ON \
+            -S ${{ github.workspace }}\${{ env.SHORT_SHA }} -B . && \
+          cmake --build . --config Release --parallel $(nproc) && \
+          cmake --install . --config Release
+
+      # Upload build artifacts
+      - name: Upload Debug artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-${{ github.sha }}
+          path: ${{ github.workspace }}\install\debug
+
+      - name: Upload Release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-${{ github.sha }}
+          path: ${{ github.workspace }}\install
