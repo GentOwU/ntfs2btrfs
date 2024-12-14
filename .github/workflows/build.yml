@@ -29,6 +29,7 @@ jobs:
           cmake --install debug-work
 
       # Build Release version
+      - run: echo test
       - run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=${PWD}/install \
